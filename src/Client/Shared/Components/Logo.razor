@@ -1,0 +1,11 @@
+﻿@namespace dashboard.Client.Shared.Components
+@using MudBlazor;
+@using MudBlazor.Services;
+
+<MudProgressCircular Color="Color.Primary" Style="height:70px;width:70px;" Indeterminate="true" />
+
+@code
+{
+    [Parameter]
+    public string Style { get; set; } = "width:100px; height:100px;";
+}

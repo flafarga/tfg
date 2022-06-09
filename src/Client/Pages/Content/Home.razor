@@ -1,0 +1,34 @@
+﻿@page "/home"
+@page "/"
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Home> _localizer
+
+<MudContainer>
+    <MudGrid>
+        <MudItem xs="12" sm="12" md="12">
+            <MudText Align="Align.Center" Typo="Typo.h2">@_localizer["Title"]</MudText>
+            <MudText Align="Align.Center" Typo="Typo.h5" Class="smaller">@_localizer["Description"]</MudText>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="12">
+            <MudText Align="Align.Center">@_localizer["Description Title"] </MudText>
+        </MudItem>
+        <MudItem xs="12" sm="12" md="12">
+            <div class="pa-4 justify-center my-4 mud-text-align-center">
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" Link="#" Target="_blank" Disabled="true">@_localizer["Research group"]</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Surface" Link="#" Target="_blank" Disabled="true">@_localizer["Center Research"]</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Link="/swagger/index.html" Target="_blank">@_localizer["Swagger"]</MudButton>
+            </div>
+        </MudItem>
+
+        <MudItem xs="12" sm="12" md="12">
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="@_localizer["Instructions of the site"]" MaxHeight="1000">
+                    @_localizer["Interesting links"]
+                    <MudList Clickable="true">
+                        <MudListItem Text="@_localizer["Desplegable 1"]" Href="#" />
+                    </MudList>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudItem>
+        <div style="margin:50px"></div>
+    </MudGrid>
+</MudContainer>

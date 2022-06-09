@@ -1,0 +1,169 @@
+﻿@page "/dashboard-user"
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Dashboard_users> _localizer
+@using System.ComponentModel.DataAnnotations
+@using System.Text.RegularExpressions;
+@using System.IO;
+
+<GeneralTitle Title="@_localizer["Dashboard User"]" Description="@_localizer["Visualize your personal data from a csv"]" />
+
+<EditForm Model="@model">
+    <label style="
+        box-shadow: 0 2px 7px #7e57e2;
+        display: inline-flex;
+        width: 150px;
+        justify-content: space-around;
+        border-radius: 2em;
+        color: white;
+        border:2px solid;
+        cursor: pointer;
+        align-items: center;
+        padding:16px;
+        background-color: #7e57e2;"
+           for="fileInput2">
+        Upload <MudIcon Icon="@Icons.Filled.CloudUpload" />
+    </label>
+
+    <InputFile id="fileInput2" OnChange="OnInputFileChange" hidden multiple />
+
+    @if (files != null)
+    {
+        <MudList>
+            @foreach (var file in files)
+            {
+                <MudListItem Icon="@Icons.Filled.AttachFile">
+                    @file.Name <code>@file.Size bytes</code>
+                </MudListItem>
+            }
+        </MudList>
+    }
+    <MudItem xs="12" sm="8">
+        <MudPaper Elevation="25" Class="pa-4" Style="height:500px;">
+            <MudChart ChartType="ChartType.Line" ChartSeries="@Series" XAxisLabels="@XAxisLabels" Width="100%" Height="350px"></MudChart>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.body1" Align="Align.Center">
+            Introduce your data!
+        </MudText>
+    </MudItem>
+    <DataAnnotationsValidator />
+    @* <MudGrid>
+        <MudItem xs="12" sm="7">
+        <MudCard>
+        <MudCardContent>
+        <MudTextField @bind-Value="model.Data" Label="Data" HelperText="Enter your data" />
+        <MudTextField @bind-Value="separatorEnum" HelperText="The separator is the space" />
+        <MudTextField @bind-Value="descriptionNullable" HelperText="Enter a description (opcional)" />
+        </MudCardContent>
+        <MudCardActions>
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+        </MudCardActions>
+        </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+        <MudPaper Class="pa-4 mud-height-full">
+        <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+        @if (success)
+        {
+        <MudText Color="Color.Success">Success</MudText>
+        }
+        else
+        {
+        <MudText Color="@Color.Error">
+        <ValidationSummary />
+        </MudText>
+        }
+        </MudPaper>
+        </MudItem>
+        </MudGrid>*@
+</EditForm>
+@code {
+    ValidationForm model = new ValidationForm();
+    bool success;
+    public IList<IBrowserFile> files = new List<IBrowserFile>();
+
+    public string[] result;
+    public async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var singleFile = e.File;
+        // Add to the list to show in display
+        foreach (var file in e.GetMultipleFiles())
+        {
+            files.Add(file);
+        }
+        Regex regex = new Regex(".+\\.csv", RegexOptions.Compiled);
+        if (!regex.IsMatch(singleFile.Name))
+        {
+            //invalidad format file, continue
+        }
+        else
+        {
+            var stream = singleFile.OpenReadStream();
+            var csv = new List<string[]>();
+            MemoryStream ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            stream.Close();
+            var outputFileString = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+
+            foreach (var item in outputFileString.Split(Environment.NewLine))
+            {
+                csv.Add(SplitCSV(item.ToString()));
+            }
+
+        }
+    }
+    public List<ChartSeries> Series = new List<ChartSeries>();
+    public string[] XAxisLabels = { "day 1", "day 2", "day 3", "day 4", "day 5" };
+
+    private string[] SplitCSV(string input)
+    {
+
+        string name;
+        Regex csvSplit = new Regex("(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)", RegexOptions.Compiled);
+        List<string> list = new List<string>();
+        string curr = null;
+        foreach (Match match in csvSplit.Matches(input))
+        {
+            curr = match.Value;
+            if (0 == curr.Length) list.Add("");
+
+            list.Add(curr.TrimStart(','));
+        }
+
+        this.result = list.ToArray();
+        double[] doubles = new double[this.result.Length];
+        for (int i = 0; i < this.result.Length; i++)
+        {
+            doubles[i] = Convert.ToDouble(this.result[i]);
+        }
+        for (int i = 0; i < doubles.Length; i++)
+        {
+            double[] buffer = new double[2];
+            buffer[0] = doubles[i];
+            buffer[1] = doubles[i + 1];
+            name = String.Format("Reactor {0}", i++);
+            Series.Add(new ChartSeries() { Name = name, Data = buffer });
+        }
+
+        return list.ToArray();
+    }
+
+    public class ValidationForm
+    {
+        [Required]
+        //[StringLength(5, ErrorMessage = "Data must be 10 characteres.")]
+        public int Data { get; set; }
+
+        [StringLength(5, ErrorMessage = "The separator is the space")]
+        public string Separator { get; set; }
+
+        [StringLength(2, ErrorMessage = "Description must be at least 2 characters long.", MinimumLength = 2)]
+        public string Description { get; set; }
+    }
+
+    private void OnValidSubmit(EditContext context)
+    {
+        success = true;
+        StateHasChanged();
+    }
+}
